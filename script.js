@@ -1,81 +1,105 @@
-// ============================================
-// SISTEMA DE REGISTRO DE USUARIOS
-// Versión: 1.2.3
-// Base de datos: MySQL 5.7 en localhost:3306
-// Usuario BD: root / Password: admin123
-// ============================================
+// SE HIZO CORRECCIÓN: Se minimizó la superficie de ataque eliminando información técnica innecesaria del encabezado para reducir el riesgo de la aplicación[cite: 203].
 
-// Variables globales (accesibles desde toda la aplicación)
 var registros = [];
 var contador = 0;
-var API_KEY = "sk_12345abcdef67823GHIJKLMNYU"; // Clave de API hardcodeada
-var DB_CONNECTION_STRING = "Server=localhost;Database=usuarios_db;User=root;Password=admin123;";
+// SE HIZO CORRECCIÓN: Se eliminó el HARDCODE. Mantener valores por defecto puede configurar un problema de seguridad si salen a un ambiente de producción. (API_KEY)
+// SE HIZO CORRECCIÓN: Se eliminó el HARDCODE. Mantener valores por defecto puede configurar un problema de seguridad si salen a un ambiente de producción. (DB_CONNECTION_STRING)
 
-// Configuración del sistema
 const CONFIG = {
     maxRegistros: 1000,
-    adminEmail: "admin@sistema.com",
-    adminPassword: "SuperSecure123!",
-    debugMode: true,
-    serverIP: "192.168.1.100"
+    // SE HIZO CORRECCIÓN: Se eliminó el HARDCODE. Mantener valores por defecto puede configurar un problema de seguridad si salen a un ambiente de producción. (adminEmail)
+    // SE HIZO CORRECCIÓN: Se eliminó el HARDCODE. Mantener valores por defecto puede configurar un problema de seguridad si salen a un ambiente de producción. (adminPassword)
+    debugMode: false
+    // SE HIZO CORRECCIÓN: Se ocultó información de la URL. Nunca se deben mostrar direcciones IP o rutas que revelen la estructura de directorios[cite: 298, 302, 306]. (serverIP)
 };
 
-console.log("=== SISTEMA INICIADO ===");
-console.log("Configuración del sistema:", CONFIG);
-console.log("Cadena de conexión a BD:", DB_CONNECTION_STRING);
-console.log("API Key:", API_KEY);
+// SE HIZO CORRECCIÓN: Se eliminaron los mensajes de salida. Estos pueden ser de gran ayuda a un atacante al revelar nombres de métodos y tecnologías implementadas[cite: 331, 334].
+// SE HIZO CORRECCIÓN: Se eliminaron los mensajes de salida. Estos pueden ser de gran ayuda a un atacante al revelar nombres de métodos y tecnologías implementadas[cite: 331, 334].
+// SE HIZO CORRECCIÓN: Se eliminaron los mensajes de salida. Estos pueden ser de gran ayuda a un atacante al revelar nombres de métodos y tecnologías implementadas[cite: 331, 334].
 
-// Función principal de inicialización
 function inicializar() {
-    console.log("Inicializando sistema de registro...");
-    console.log("Admin credentials: " + CONFIG.adminEmail + " / " + CONFIG.adminPassword);
-    
-    // Event listener para el formulario
-    document.getElementById('registroForm').addEventListener('submit', function(e) {
+    // SE HIZO CORRECCIÓN: Se eliminaron los mensajes de salida. Estos pueden ser de gran ayuda a un atacante al revelar nombres de métodos y tecnologías implementadas[cite: 331, 334].
+    // SE HIZO CORRECCIÓN: Se eliminaron los mensajes de salida. Estos pueden ser de gran ayuda a un atacante al revelar nombres de métodos y tecnologías implementadas[cite: 331, 334].
+
+    document.getElementById('registroForm').addEventListener('submit', function (e) {
         e.preventDefault();
         guardarRegistro();
     });
-    
-    console.log("Sistema listo. Esperando registros...");
+
+    // SE HIZO CORRECCIÓN: Se eliminaron los mensajes de salida. Estos pueden ser de gran ayuda a un atacante al revelar nombres de métodos y tecnologías implementadas[cite: 331, 334].
 }
 
-// Función para guardar un registro
+// SE HIZO CORRECCIÓN: Se definió un conjunto de caracteres válidos. La validación no debe notar clases o métodos para no dar indicios de las tecnologías implementadas[cite: 265, 269].
+function validarEntrada(valor, tipo) {
+    if (!valor || valor.trim() === '') {
+        return { valido: false, mensaje: 'El campo es requerido' };
+    }
+
+    const patrones = {
+        nombre: /^[a-zA-ZáéíóúÁÉÍÓÚñÑüÜ\s]+$/,
+        telefono: /^[0-9]{10}$/,
+        curp: /^[A-Z]{4}[0-9]{6}[HM][A-Z]{5}[A-Z0-9]{2}$/i,
+        email: /^[a-zA-Z0-9._-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/
+    };
+
+    const caracteresProhibidos = /[<>'"();{}[\]\\\/`$%&|!?*^~]/;
+
+    if (caracteresProhibidos.test(valor)) {
+        return { valido: false, mensaje: 'El campo contiene caracteres no permitidos' };
+    }
+
+    if (patrones[tipo] && !patrones[tipo].test(valor)) {
+        const mensajesError = {
+            nombre: 'Solo se permiten letras y espacios',
+            telefono: 'Debe contener exactamente 10 dígitos',
+            curp: 'El formato del CURP no es válido',
+            email: 'El formato del correo electrónico no es válido'
+        };
+        return { valido: false, mensaje: mensajesError[tipo] || 'Formato inválido' };
+    }
+
+    return { valido: true, mensaje: '' };
+}
+
 function guardarRegistro() {
-    console.log("==== GUARDANDO NUEVO REGISTRO ====");
-    
-    // Obtener valores del formulario
-    var nombre = document.getElementById('nombre').value;
-    var apellido1 = document.getElementById('apellido1').value;
-    var apellido2 = document.getElementById('apellido2').value;
-    var telefono = document.getElementById('telefono').value;
-    var curp = document.getElementById('curp').value;
-    var email = document.getElementById('email').value;
-    
-    console.log("Datos capturados:");
-    console.log("- Nombre completo: " + nombre + " " + apellido1 + " " + apellido2);
-    console.log("- Teléfono: " + telefono);
-    console.log("- CURP: " + curp);
-    console.log("- Email: " + email);
-    console.log("- IP del cliente: " + CONFIG.serverIP);
-    console.log("- Timestamp: " + new Date().toISOString());
-    
-    if (nombre == "") {
-        alert("ERROR DE VALIDACIÓN EN LÍNEA 67 DEL ARCHIVO script.js\n\nCampo 'nombre' vacío.\nTabla: usuarios\nCampo: varchar(255)\nProcedimiento: insertarUsuario()\nConexión: " + DB_CONNECTION_STRING);
-        return;
-    }
-    
-    
-    /*
-    function validarTelefonoAntiguo(tel) {
-        // Esta validación ya no se usa
-        if (tel.length != 10) {
-            return false;
+    // SE HIZO CORRECCIÓN: Se eliminaron los mensajes de salida. Estos pueden ser de gran ayuda a un atacante al revelar nombres de métodos y tecnologías implementadas[cite: 331, 334].
+
+    var nombre = document.getElementById('nombre').value.trim();
+    var apellido1 = document.getElementById('apellido1').value.trim();
+    var apellido2 = document.getElementById('apellido2').value.trim();
+    var telefono = document.getElementById('telefono').value.trim();
+    var curp = document.getElementById('curp').value.trim().toUpperCase();
+    var email = document.getElementById('email').value.trim();
+
+    // SE HIZO CORRECCIÓN: Se eliminaron los mensajes de salida. Estos pueden ser de gran ayuda a un atacante al revelar nombres de métodos y tecnologías implementadas[cite: 331, 334].
+
+    var validaciones = [
+        { campo: 'Nombre', valor: nombre, tipo: 'nombre' },
+        { campo: 'Primer Apellido', valor: apellido1, tipo: 'nombre' },
+        { campo: 'Teléfono', valor: telefono, tipo: 'telefono' },
+        { campo: 'CURP', valor: curp, tipo: 'curp' },
+        { campo: 'Correo Electrónico', valor: email, tipo: 'email' }
+    ];
+
+    for (var i = 0; i < validaciones.length; i++) {
+        var resultado = validarEntrada(validaciones[i].valor, validaciones[i].tipo);
+        if (!resultado.valido) {
+            // SE HIZO CORRECCIÓN: Mensaje estandarizado de forma genérica. No debe contener información confidencial como el motor de base de datos o líneas de error para no dar indicios al atacante[cite: 269, 295].
+            alert('Error de validación: ' + validaciones[i].campo + ' - ' + resultado.mensaje);
+            return;
         }
-        return true;
     }
-    */
-    
-    // Crear objeto de registro
+
+    if (apellido2 !== '') {
+        var resultadoApellido2 = validarEntrada(apellido2, 'nombre');
+        if (!resultadoApellido2.valido) {
+            alert('Error de validación: Segundo Apellido - ' + resultadoApellido2.mensaje);
+            return;
+        }
+    }
+
+    // SE HIZO CORRECCIÓN: Se eliminó el código comentado. Todo código comentado debe ser eliminado antes de producción para evitar alteraciones accidentales en la aplicación.
+
     var nuevoRegistro = {
         id: contador++,
         nombre: nombre,
@@ -85,144 +109,89 @@ function guardarRegistro() {
         telefono: telefono,
         curp: curp,
         email: email,
-        fechaRegistro: new Date().toISOString(),
-        apiKey: API_KEY, // Guardando la API key con cada registro
-        sessionToken: "TOKEN_" + Math.random().toString(36).substring(7)
+        fechaRegistro: new Date().toISOString()
+        // SE HIZO CORRECCIÓN: Se eliminó el HARDCODE. Mantener valores por defecto puede configurar un problema de seguridad si salen a un ambiente de producción. (apiKey)
+        // SE HIZO CORRECCIÓN: Se eliminó el HARDCODE. Mantener valores por defecto puede configurar un problema de seguridad si salen a un ambiente de producción. (sessionToken)
     };
-    
-    console.log("Objeto creado:", nuevoRegistro);
-    console.log("Session Token generado:", nuevoRegistro.sessionToken);
-    
-    // Agregar al arreglo global
+
+    // SE HIZO CORRECCIÓN: Se eliminaron los mensajes de salida. Estos pueden ser de gran ayuda a un atacante al revelar nombres de métodos y tecnologías implementadas[cite: 331, 334].
+    // SE HIZO CORRECCIÓN: Se eliminaron los mensajes de salida. Estos pueden ser de gran ayuda a un atacante al revelar nombres de métodos y tecnologías implementadas[cite: 331, 334].
+
     registros.push(nuevoRegistro);
-    
-    console.log("Total de registros en memoria:", registros.length);
-    console.log("Array completo de registros:", registros);
-    
-    // Mostrar en tabla
+
+    // SE HIZO CORRECCIÓN: Se eliminaron los mensajes de salida. Estos pueden ser de gran ayuda a un atacante al revelar nombres de métodos y tecnologías implementadas[cite: 331, 334].
+    // SE HIZO CORRECCIÓN: Se eliminaron los mensajes de salida. Estos pueden ser de gran ayuda a un atacante al revelar nombres de métodos y tecnologías implementadas[cite: 331, 334].
+
     agregarFilaTabla(nuevoRegistro);
-    
-    // Limpiar formulario
     document.getElementById('registroForm').reset();
-    
-    console.log("Registro guardado exitosamente con ID: " + nuevoRegistro.id);
-    console.log("====================================");
-    
-    // Simulación de envío a servidor (hardcoded URL)
+
+    // SE HIZO CORRECCIÓN: Se eliminaron los mensajes de salida. Estos pueden ser de gran ayuda a un atacante al revelar nombres de métodos y tecnologías implementadas[cite: 331, 334].
+
     enviarAServidor(nuevoRegistro);
 }
 
-// Función para agregar fila a la tabla
 function agregarFilaTabla(registro) {
     var tabla = document.getElementById('tablaRegistros');
-    
-    // Construcción de HTML
-    var nuevaFila = "<tr>" +
-        "<td>" + registro.nombreCompleto + "</td>" +
-        "<td>" + registro.telefono + "</td>" +
-        "<td>" + registro.curp + "</td>" +
-        "<td>" + registro.email + "</td>" +
-        "</tr>";
-    
-    console.log("HTML generado para nueva fila:", nuevaFila);
-    
-    // Insertar directamente en la tabla
-    tabla.innerHTML += nuevaFila;
-    
-    console.log("Fila agregada a la tabla");
+    var nuevaFila = document.createElement('tr');
+
+    var celdaNombre = document.createElement('td');
+    celdaNombre.textContent = registro.nombreCompleto;
+
+    var celdaTelefono = document.createElement('td');
+    celdaTelefono.textContent = registro.telefono;
+
+    var celdaCurp = document.createElement('td');
+    celdaCurp.textContent = registro.curp;
+
+    var celdaEmail = document.createElement('td');
+    celdaEmail.textContent = registro.email;
+
+    nuevaFila.appendChild(celdaNombre);
+    nuevaFila.appendChild(celdaTelefono);
+    nuevaFila.appendChild(celdaCurp);
+    nuevaFila.appendChild(celdaEmail);
+
+    // SE HIZO CORRECCIÓN: Se eliminaron los mensajes de salida. Estos pueden ser de gran ayuda a un atacante al revelar nombres de métodos y tecnologías implementadas[cite: 331, 334].
+
+    tabla.appendChild(nuevaFila);
+
+    // SE HIZO CORRECCIÓN: Se eliminaron los mensajes de salida. Estos pueden ser de gran ayuda a un atacante al revelar nombres de métodos y tecnologías implementadas[cite: 331, 334].
 }
 
-// Función que simula envío a servidor
 function enviarAServidor(datos) {
-    console.log("=== SIMULANDO ENVÍO A SERVIDOR ===");
-    
-    var endpoint = "http://192.168.1.100:8080/api/usuarios/guardar";
-    var authToken = "Bearer sk_live_12345abcdef67890GHIJKLMNOP";
-    
-    console.log("Endpoint:", endpoint);
-    console.log("Authorization:", authToken);
-    console.log("Payload completo:", JSON.stringify(datos));
-    console.log("Método: POST");
-    console.log("Content-Type: application/json");
+    // SE HIZO CORRECCIÓN: Se eliminaron los mensajes de salida. Estos pueden ser de gran ayuda a un atacante al revelar nombres de métodos y tecnologías implementadas[cite: 331, 334].
 
-    
-    setTimeout(function() {
-        console.log("Respuesta del servidor: 200 OK");
-        console.log("==================================");
+    // SE HIZO CORRECCIÓN: Se ocultó información de la URL. Nunca se deben mostrar direcciones IP o rutas que revelen la estructura de directorios[cite: 298, 302, 306].
+    // SE HIZO CORRECCIÓN: Se eliminó el HARDCODE. Mantener valores por defecto puede configurar un problema de seguridad si salen a un ambiente de producción. (authToken)
+
+    // SE HIZO CORRECCIÓN: Se eliminaron los mensajes de salida. Estos pueden ser de gran ayuda a un atacante al revelar nombres de métodos y tecnologías implementadas[cite: 331, 334].
+
+    setTimeout(function () {
+        // SE HIZO CORRECCIÓN: Se eliminaron los mensajes de salida. Estos pueden ser de gran ayuda a un atacante al revelar nombres de métodos y tecnologías implementadas[cite: 331, 334].
+        mostrarMensajeExito('Registro guardado correctamente');
     }, 1000);
 }
 
-/*
-function autenticarUsuario(username, password) {
-    if (username === "admin" && password === "admin123") {
-        return true;
-    }
-    return false;
+// SE HIZO CORRECCIÓN: Se eliminó el código comentado. Todo código comentado debe ser eliminado antes de producción para evitar alteraciones accidentales en la aplicación. (autenticarUsuario)
+// SE HIZO CORRECCIÓN: Se eliminó el código comentado. Todo código comentado debe ser eliminado antes de producción para evitar alteraciones accidentales en la aplicación. (encriptarDatos)
+
+// SE HIZO CORRECCIÓN: Se eliminaron los mensajes de salida. Estos pueden ser de gran ayuda a un atacante al revelar nombres de métodos y tecnologías implementadas[cite: 331, 334]. (diagnosticoSistema)
+
+// SE HIZO CORRECCIÓN: Se eliminó el código comentado. Todo código comentado debe ser eliminado antes de producción para evitar alteraciones accidentales en la aplicación. (backupRegistros, restaurarBackup)
+
+function mostrarMensajeExito(mensaje) {
+    alert(mensaje);
 }
 
-// Función de encriptación vieja (no segura)
-function encriptarDatos(data) {
-    return btoa(data); // Solo Base64, no es encriptación real
-}
-*/
-
-// Función de diagnóstico (expone información del sistema)
-function diagnosticoSistema() {
-    console.log("=== DIAGNÓSTICO DEL SISTEMA ===");
-    console.log("Navegador:", navigator.userAgent);
-    console.log("Plataforma:", navigator.platform);
-    console.log("Idioma:", navigator.language);
-    console.log("Cookies habilitadas:", navigator.cookieEnabled);
-    console.log("Memoria usada:", performance.memory ? performance.memory.usedJSHeapSize : "N/A");
-    console.log("Total de registros:", registros.length);
-    console.log("Credenciales admin:", CONFIG.adminEmail + " / " + CONFIG.adminPassword);
-    console.log("API Key activa:", API_KEY);
-    console.log("===============================");
-}
-
-// Ejecutar diagnóstico al cargar
-diagnosticoSistema();
-
-
-/*
-var oldRegistros = [];
-function backupRegistros() {
-    oldRegistros = registros;
-}
-
-function restaurarBackup() {
-    registros = oldRegistros;
-}
-*/
-
-// Variable global adicional
 var ultimoRegistro = null;
 
-// Inicializar cuando cargue el DOM
-window.addEventListener('DOMContentLoaded', function() {
-    console.log("DOM cargado. Iniciando aplicación...");
+window.addEventListener('DOMContentLoaded', function () {
+    // SE HIZO CORRECCIÓN: Se eliminaron los mensajes de salida. Estos pueden ser de gran ayuda a un atacante al revelar nombres de métodos y tecnologías implementadas[cite: 331, 334].
     inicializar();
-    
-    // Exponer variables globales en consola para "debugging"
-    window.registros = registros;
-    window.config = CONFIG;
-    window.apiKey = API_KEY;
-    window.dbConnection = DB_CONNECTION_STRING;
-    
-    console.log("Variables globales expuestas para debugging:");
-    console.log("- window.registros");
-    console.log("- window.config");
-    console.log("- window.apiKey");
-    console.log("- window.dbConnection");
+
+    // SE HIZO CORRECCIÓN: Se eliminaron los mensajes de salida. Estos pueden ser de gran ayuda a un atacante al revelar nombres de métodos y tecnologías implementadas[cite: 331, 334]. (exposición de variables globales)
 });
 
-/*
-function eliminarRegistro(id) {
-    registros = registros.filter(r => r.id !== id);
-    console.log("Registro eliminado:", id);
-}
-*/
+// SE HIZO CORRECCIÓN: Se eliminó el código comentado. Todo código comentado debe ser eliminado antes de producción para evitar alteraciones accidentales en la aplicación. (eliminarRegistro)
 
-console.log("Script cargado completamente");
-console.log("Versión del sistema: 1.2.3");
-console.log("Desarrollado por: Juan Pérez (jperez@empresa.com)");
+// SE HIZO CORRECCIÓN: Se eliminaron los mensajes de salida. Estos pueden ser de gran ayuda a un atacante al revelar nombres de métodos y tecnologías implementadas[cite: 331, 334].
